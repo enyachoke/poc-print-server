@@ -10,6 +10,26 @@ then run
 
 ```$ lpr out.pdf ```
 
+You can run
+
+```lpq -l | grep "ready" | grep -v "not" | grep -Eo '^[^ ]+'``` 
+
+to get the names of printers that are ready to accept jobs
+ this will return something like
+ 
+ ```
+ DYMO_LabelWriter_450_Turbo
+ Brother_QL-710W
+ HP_LaserJet_Pro_MFP_M125nw
+ ......etc
+ ```
+you can then run the command above with
+
+```
+lpr DYMO_LabelWriter_450_Turbo out.pdf
+```
+To explicitly print to ```DYMO_LabelWriter_450_Turbo ```
+
 to print with your default cups printer.If that is okay then run 
 ```$ npm install ``` to fetch dependencies and then
 
