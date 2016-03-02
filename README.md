@@ -50,3 +50,4 @@ ${1}
 ``` 
 Instead of  the text for the particular widget
 
+The file ```labelwithname.glabels``` is a label template for ```Dymo 999010 Address labels 28.575mm X 88.9mm``` 
