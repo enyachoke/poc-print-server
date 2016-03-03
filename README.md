@@ -12,14 +12,13 @@ then run
 
 You can run
 
-```lpq -l | grep "ready" | grep -v "not" | grep -Eo '^[^ ]+'``` 
+```lpstat -p | grep -v off | grep -v paused | grep -v disabled | grep -v directory | grep -v 'ready to print' |sed 's/is idle.*//' | cut -d " " -f2-``` 
 
 to get the names of printers that are ready to accept jobs
- this will return something like
+ this will return something like (This works but maybe there is a better way)
  
  ```
  DYMO_LabelWriter_450_Turbo
- Brother_QL-710W
  HP_LaserJet_Pro_MFP_M125nw
  ......etc
  ```
