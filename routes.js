@@ -6,8 +6,28 @@ const exec = require('child_process').exec;
 const randomstring = require("randomstring");
 let internals = {};
 const printer_name = '';
+internals.getPrinters = function(request, reply) {
+  var command = "lpstat -p | grep -v off | grep -v paused | grep -v disabled | grep -v directory | grep -v \'ready to print\' |sed \'s\/is idle.*\/\/\' | cut -d \" \" -f2- | grep -v 'to print.' | sed 's: ::g'"
+  var child;
+  child = exec(command, function(error, stdout, stderr) {
 
-internals.getProducts = function(request, reply) {
+    if (error !== null) {
+      console.log('exec error: ' + error);
+
+      reply('Error querying printers server may be down').code(500);
+    } else {
+      var lines = stdout.split('\n');
+      var printers = [];
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i] !== undefined && lines[i] !== null && lines[i] !== "") {
+          printers.push({name:lines[i]});
+        }
+      }
+      reply(printers);
+    }
+  });
+};
+internals.printPayload = function(request, reply) {
   if (request.payload.labelData) {
     var tempFile = randomstring.generate({
       length: 12,
@@ -68,6 +88,12 @@ module.exports = [{
         labelData: Joi.required()
       }
     },
-    handler: internals.getProducts
+    handler: internals.printPayload
+  }
+}, {
+  method: 'GET',
+  path: '/printers',
+  config: {
+    handler: internals.getPrinters
   }
 }];
