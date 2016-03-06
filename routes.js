@@ -1,10 +1,12 @@
 'use strict';
 const Joi = require('joi');
-const json2csv = require('json2csv');
-const fs = require('fs');
-const exec = require('child_process').exec;
+const Bluebird = require("bluebird");
+const json2csv = Bluebird.promisify(require('json2csv'))
+const writeFile = Bluebird.promisify(require('fs').writeFile);
+const fs = Bluebird.promisifyAll(require('fs'));
+const exec = Bluebird.promisify(require('child_process').exec);
 const randomstring = require("randomstring");
-var printer = require('printer');
+const printLabel = require("./util/printLabel").printLabel;
 let internals = {};
 const printer_name = '';
 internals.getPrinters = function(request, reply) {
@@ -19,58 +21,25 @@ internals.printPayload = function(request, reply) {
     json2csv({
       data: request.payload.labelData,
       hasCSVColumnTitle: false
-    }, function(err, csv) {
-      if (err) {
-        reply('').code(500);
-      }
-      fs.writeFile(tempFile + '.csv', csv, function(err) {
-        if (err) {
-          reply('CSV label content could not be created').code(500);
-        }
-        var child;
-        // executes `pwd`
-        child = exec("glabels-3-batch labelwithname.glabels --input=" + tempFile + ".csv" + " --output=" + tempFile + ".pdf",
-          function(error, stdout, stderr) {
-            if (error !== null) {
-              reply('Unable to create a printable lable').code(500);
-            }
-            printer.printFile({filename:tempFile+".pdf",
-                printer: request.payload.printer, // printer name, if missing then will print to default printer
-                success:function(jobID){
-                  removeTempFiles(tempFile);
-                  var message = {
-                    success: 'Print job sent',
-                    jobId: jobID
-                  };
-                  reply(message);
-                },
-                error:function(err){
-                  var message = {
-                    message: 'Print job not created',
-                    error:err
-                  };
-                  reply(message);
-                }
-              });
-          });
-      });
+    }).then(function(csv) {
+      return writeFile(tempFile + '.csv', csv, {}).then(function() {});
+    }).then(function(result) {
+      return exec("glabels-3-batch labelwithname.glabels --input=" + tempFile + ".csv" + " --output=" + tempFile + ".pdf");
+    }).then(function(result) {
+      return printLabel(tempFile + '.pdf', request.payload.printer);
+    }).then(function(result) {
+      removeTempFiles(tempFile);
+      reply(result);
+    }).catch(function(err) {
+      removeTempFiles(tempFile);
+      reply('An error occured');
     });
   }
 };
 
 function removeTempFiles(tempFile) {
-  fs.unlink(tempFile + ".pdf", function(err) {
-    if (err) {
-      return console.error(err);
-    }
-    console.log("PDF temp file deleted successfully!");
-  });
-  fs.unlink(tempFile + ".csv", function(err) {
-    if (err) {
-      return console.error(err);
-    }
-    console.log("CSV temp file deleted successfully!");
-  });
+  fs.unlink(tempFile+'.pdf');
+  fs.unlink(tempFile+'.csv');
 }
 module.exports = [{
   method: 'POST',
@@ -78,7 +47,7 @@ module.exports = [{
   config: {
     validate: {
       payload: {
-        printer :Joi.string(),
+        printer: Joi.string(),
         labelData: Joi.required()
       }
     },
