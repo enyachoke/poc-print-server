@@ -4,28 +4,11 @@ const json2csv = require('json2csv');
 const fs = require('fs');
 const exec = require('child_process').exec;
 const randomstring = require("randomstring");
+var printer = require('printer');
 let internals = {};
 const printer_name = '';
 internals.getPrinters = function(request, reply) {
-  var command = "lpstat -p | grep -v off | grep -v paused | grep -v disabled | grep -v directory | grep -v \'ready to print\' |sed \'s\/is idle.*\/\/\' | cut -d \" \" -f2- | grep -v 'to print.' | sed 's: ::g'"
-  var child;
-  child = exec(command, function(error, stdout, stderr) {
-
-    if (error !== null) {
-      console.log('exec error: ' + error);
-
-      reply('Error querying printers server may be down').code(500);
-    } else {
-      var lines = stdout.split('\n');
-      var printers = [];
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i] !== undefined && lines[i] !== null && lines[i] !== "") {
-          printers.push({name:lines[i]});
-        }
-      }
-      reply(printers);
-    }
-  });
+  reply(printer.getPrinters());
 };
 internals.printPayload = function(request, reply) {
   if (request.payload.labelData) {
@@ -38,12 +21,10 @@ internals.printPayload = function(request, reply) {
       hasCSVColumnTitle: false
     }, function(err, csv) {
       if (err) {
-        console.log(err);
         reply('').code(500);
       }
       fs.writeFile(tempFile + '.csv', csv, function(err) {
         if (err) {
-          console.log('exec error: ' + error);
           reply('CSV label content could not be created').code(500);
         }
         var child;
@@ -51,40 +32,53 @@ internals.printPayload = function(request, reply) {
         child = exec("glabels-3-batch labelwithname.glabels --input=" + tempFile + ".csv" + " --output=" + tempFile + ".pdf",
           function(error, stdout, stderr) {
             if (error !== null) {
-              console.log('exec error: ' + error);
               reply('Unable to create a printable lable').code(500);
             }
-            child = exec("lpr " + tempFile + ".pdf", function(error, stdout, stderr) {
-              if (error !== null) {
-                console.log('exec error: ' + error);
-                reply('The the printer may not be ready to accept jobs').code(500);
-              }
-              fs.unlink(tempFile + ".pdf", function(err) {
-                if (err) {
-                  return console.error(err);
+            printer.printFile({filename:tempFile+".pdf",
+                printer: request.payload.printer, // printer name, if missing then will print to default printer
+                success:function(jobID){
+                  removeTempFiles(tempFile);
+                  var message = {
+                    success: 'Print job sent',
+                    jobId: jobID
+                  };
+                  reply(message);
+                },
+                error:function(err){
+                  var message = {
+                    message: 'Print job not created',
+                    error:err
+                  };
+                  reply(message);
                 }
-                console.log("PDF temp file deleted successfully!");
               });
-              fs.unlink(tempFile + ".csv", function(err) {
-                if (err) {
-                  return console.error(err);
-                }
-                console.log("CSV temp file deleted successfully!");
-              });
-              reply('done');
-            });
           });
       });
     });
   }
 };
 
+function removeTempFiles(tempFile) {
+  fs.unlink(tempFile + ".pdf", function(err) {
+    if (err) {
+      return console.error(err);
+    }
+    console.log("PDF temp file deleted successfully!");
+  });
+  fs.unlink(tempFile + ".csv", function(err) {
+    if (err) {
+      return console.error(err);
+    }
+    console.log("CSV temp file deleted successfully!");
+  });
+}
 module.exports = [{
   method: 'POST',
   path: '/print_lab_label',
   config: {
     validate: {
       payload: {
+        printer :Joi.string(),
         labelData: Joi.required()
       }
     },
