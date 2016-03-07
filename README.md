@@ -38,7 +38,9 @@ Currently the server expects a json payload similar to
 
 ```json
 {
- "labelData":  [
+ "template":"labelwithname",
+ "printer":"Brother_QL-710W",
+ "mergeData":  [
   {
     "first_name": "Emmanuel",
     "last_name": "Nyachoke",
