@@ -70,3 +70,5 @@ ${1}
 Instead of  the text for the particular widget
 
 The file ```labelwithname.glabels``` is a label template for ```Dymo 999010 Address labels 28.575mm X 88.9mm``` 
+
+This template will work just fine with ``` Brother DK 29mmX90.3mm``` labels you can jst design on the this printer with glabels
