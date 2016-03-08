@@ -1,20 +1,7 @@
 'use strict';
-
-const Hapi = require('hapi');
-
-const Routes = require('./routes');
-// Create a server with a host and port
-const server = new Hapi.Server();
-server.connection({
-  host: 'localhost',
-  port: 8000,
-  routes: {
-    cors: true
-  }
-});
-
-// Add the route
-server.route(Routes);
+var hapi_server = require('./server/server.js');
+var port = 8000;
+var server = hapi_server.createServer(port);
 
 // Start the server
 server.start((err) => {
