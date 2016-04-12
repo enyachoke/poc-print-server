@@ -36,3 +36,4 @@ conf/config.json
 conf/server.crt
 conf/server.key
 conf/server.csr
+daemon.js
