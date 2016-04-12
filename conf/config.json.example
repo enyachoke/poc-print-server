@@ -1,0 +1,7 @@
+{
+  "host": "localhost",
+  "port": 8000,
+  "key": "/home/developer/Code/JS/poc-print-server/conf/server.key",
+  "cert": "/home/developer/Code/JS/poc-print-server/conf/server.crt",
+  "tls": true
+}

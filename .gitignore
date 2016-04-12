@@ -32,3 +32,7 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+conf/config.json
+conf/server.crt
+conf/server.key
+conf/server.csr

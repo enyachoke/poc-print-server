@@ -24,6 +24,7 @@
     "json2csv": "^3.2.0",
     "printer": "^0.2.1",
     "randomstring": "^1.1.4",
+    "tls": "0.0.1",
     "vision": "^4.0.1"
   },
   "devDependencies": {

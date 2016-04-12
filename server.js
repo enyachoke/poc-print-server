@@ -1,10 +1,51 @@
-'use strict';
-var hapi_server = require('./server/server.js');
-var port = 8000;
-var server = hapi_server.createServer(port);
+const Hapi = require("hapi");
+const Routes = require('./routes/routes');
+const https = require('https');
+const fs = require('fs');
+const server = new Hapi.Server();
+const Inert = require('inert');
+const Vision = require('vision');
+const HapiSwagger = require('hapi-swagger');
+const Pack = require('./package');
+const config = require('./conf/config');
+const tls = require('tls');
+const options = {
+  info: {
+    'title': 'POC print server api documention',
+    'version': Pack.version,
+  }
+};
+var tls_config = false;
+if (config.tls) {
+  tls_config = tls.createServer({
+    key: fs.readFileSync(config.key),
+    cert: fs.readFileSync(config.cert)
+  });
+}
 
-// Start the server
-server.start((err) => {
+function createServer() {
+  server.connection({
+    host: config.host,
+    port: config.port,
+    routes: {
+      cors: true
+    },
+    tls: tls_config
+  });
+  server.register([
+      Inert,
+      Vision,
+      {
+          'register': HapiSwagger,
+          'options': options
+      }]);
+  // Add the route
+  server.route(Routes);
+
+  return server;
+}
+const hapiServer = createServer();
+hapiServer.start((err) => {
 
   if (err) {
     throw err;
