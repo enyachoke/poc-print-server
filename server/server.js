@@ -21,14 +21,19 @@ function createServer(port) {
     }
   });
   server.register([
-      Inert,
-      Vision,
-      {
-          'register': HapiSwagger,
-          'options': options
-      }]);
+    Inert,
+    Vision, {
+      'register': HapiSwagger,
+      'options': options
+    }, {
+      register: require('hapi-router'),
+      options: {
+        routes: 'routes/**/*.js' // uses glob to include files
+      }
+    }
+  ]);
   // Add the route
-  server.route(Routes);
+  //  server.route(Routes);
 
   return server;
 }
